@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://dbserver:5432/identitydb
+    driver-class-name: org.postgresql.Driver
+    username: dbuser
+    password: secretpassword
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+
+server:
+  port: 8081

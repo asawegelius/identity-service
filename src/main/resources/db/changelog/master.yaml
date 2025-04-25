@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/001-create-user-table.yaml
+  - include:
+      file: db/changelog/002-create-system-client-table.yaml
+  - include:
+      file: db/changelog/003-create-credential-table.yaml
+  - include:
+      file: db/changelog/004-create-session-table.yaml
+  - include:
+      file: db/changelog/005-create-client-application-table.yaml
+  - include:
+      file: db/changelog/006-create-client-application-redirect-uri-table.yaml
+  - include:
+      file: db/changelog/007-create-client-application-grant-type-table.yaml
+  - include:
+      file: db/changelog/008-create-authorization-grant-table.yaml
+  - include:
+      file: db/changelog/009-create-user-audit-table.yaml

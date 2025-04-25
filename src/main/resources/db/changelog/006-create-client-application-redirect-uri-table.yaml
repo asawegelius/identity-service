@@ -1,0 +1,47 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-create-client-application-redirect-uri-table
+      author: Åsa Wegelius
+      changes:
+        - createTable:
+            tableName: client_application_redirect_uri
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                  defaultValueComputed: gen_random_uuid()
+              - column:
+                  name: application_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: redirect_uri
+                  type: TEXT
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: client_application_redirect_uri
+            baseColumnNames: application_id
+            constraintName: fk_redirect_app
+            referencedTableName: client_application
+            referencedColumnNames: application_id
+            onDelete: CASCADE
+
+        - createIndex:
+            tableName: client_application_redirect_uri
+            indexName: idx_redirect_uri_id
+            columns:
+              - column:
+                  name: id
+
+        - createIndex:
+            tableName: client_application_redirect_uri
+            indexName: idx_redirect_uri_application_id
+            columns:
+              - column:
+                  name: application_id

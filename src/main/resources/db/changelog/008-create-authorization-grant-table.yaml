@@ -1,0 +1,82 @@
+databaseChangeLog:
+  - changeSet:
+      id: 008-create-authorization-grant-table
+      author: Åsa Wegelius
+      changes:
+        - createTable:
+            tableName: authorization_grant
+            columns:
+              - column:
+                  name: grant_id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: grant_type
+                  type: VARCHAR(32)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: code
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: UUID
+              - column:
+                  name: client_app_id
+                  type: UUID
+              - column:
+                  name: issued_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expires_at
+                  type: TIMESTAMPTZ
+                  constraints:
+                    nullable: false
+              - column:
+                  name: redirect_uri
+                  type: TEXT
+
+        - addForeignKeyConstraint:
+            baseTableName: authorization_grant
+            baseColumnNames: user_id
+            referencedTableName: user
+            referencedColumnNames: user_id
+            constraintName: fk_grant_user
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: authorization_grant
+            baseColumnNames: client_app_id
+            referencedTableName: client_application
+            referencedColumnNames: application_id
+            constraintName: fk_grant_client_app
+            onDelete: CASCADE
+
+        - createIndex:
+            tableName: authorization_grant
+            indexName: idx_grant_grant_id
+            columns:
+              - column:
+                  name: grant_id
+
+        - createIndex:
+            tableName: authorization_grant
+            indexName: idx_grant_code
+            columns:
+              - column:
+                  name: code
+
+        - createIndex:
+            tableName: authorization_grant
+            indexName: idx_grant_expires_at
+            columns:
+              - column:
+                  name: expires_at

@@ -1,5 +1,6 @@
 plugins {
 	id 'java'
+	id 'groovy'
 	id 'org.springframework.boot' version '3.4.4'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
@@ -18,9 +19,28 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.bouncycastle:bcprov-jdk18on:1.80'
+	implementation 'org.springframework.security:spring-security-oauth2-authorization-server:1.4.2'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.liquibase:liquibase-core'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'io.micrometer:micrometer-registry-prometheus'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6'
+	implementation 'org.slf4j:slf4j-api:2.0.17'
+	runtimeOnly 'ch.qos.logback:logback-classic:1.5.18'
+
+	runtimeOnly 'com.h2database:h2'
+	runtimeOnly 'org.postgresql:postgresql'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+	testImplementation('org.springframework.boot:spring-boot-starter-test') {
+		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+	}
+
+	testImplementation 'org.spockframework:spock-core:2.4-M6-groovy-3.0'
+	testImplementation 'org.spockframework:spock-spring:2.4-M6-groovy-3.0'
 }
 
 tasks.named('test') {

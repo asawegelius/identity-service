@@ -1,0 +1,43 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-user-table
+      author: Åsa Wegelius
+      changes:
+        - createTable:
+            tableName: user
+            columns:
+              - column:
+                  name: user_id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_type
+                  type: VARCHAR(32)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: VARCHAR(320)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: display_name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
