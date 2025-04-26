@@ -1,0 +1,133 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-create-system-client-with-audit
+      author: Åsa Wegelius
+      changes:
+        # Main table
+        - createTable:
+            tableName: system_client
+            columns:
+              - column:
+                  name: client_id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: client_name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+              - column:
+                  name: registered_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+
+        - createIndex:
+            tableName: system_client
+            indexName: idx_system_client_client_id
+            columns:
+              - column:
+                  name: client_id
+
+        - createIndex:
+            tableName: system_client
+            indexName: idx_system_client_client_name
+            columns:
+              - column:
+                  name: client_name
+
+        # Audit table
+        - createTable:
+            tableName: system_client_audit
+            columns:
+              - column:
+                  name: audit_id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: client_id
+                  type: UUID
+              - column:
+                  name: client_name
+                  type: VARCHAR(255)
+              - column:
+                  name: description
+                  type: TEXT
+              - column:
+                  name: registered_at
+                  type: TIMESTAMPTZ
+              - column:
+                  name: operation_type
+                  type: VARCHAR(16)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: change_timestamp
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: actor_type
+                  type: VARCHAR(16)
+              - column:
+                  name: actor_id
+                  type: UUID
+
+        - createIndex:
+            tableName: system_client_audit
+            indexName: idx_system_client_audit_client_id
+            columns:
+              - column:
+                  name: client_id
+
+        # Trigger function
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              CREATE OR REPLACE FUNCTION audit_system_client_changes() RETURNS TRIGGER AS $$
+              BEGIN
+                INSERT INTO system_client_audit (
+                  client_id,
+                  client_name,
+                  description,
+                  registered_at,
+                  operation_type,
+                  change_timestamp,
+                  actor_type,
+                  actor_id
+                ) VALUES (
+                  COALESCE(NEW.client_id, OLD.client_id),
+                  COALESCE(NEW.client_name, OLD.client_name),
+                  COALESCE(NEW.description, OLD.description),
+                  COALESCE(NEW.registered_at, OLD.registered_at),
+                  TG_OP,
+                  now(),
+                  NULL,
+                  NULL
+                );
+                RETURN NEW;
+              END;
+              $$ LANGUAGE plpgsql;
+
+        # Trigger
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              CREATE TRIGGER trg_system_client_audit
+              AFTER INSERT OR UPDATE OR DELETE
+              ON system_client
+              FOR EACH ROW
+              EXECUTE FUNCTION audit_system_client_changes();

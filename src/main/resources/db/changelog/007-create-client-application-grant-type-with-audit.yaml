@@ -1,0 +1,132 @@
+databaseChangeLog:
+  - changeSet:
+      id: 007-create-client-application-grant-type-with-audit
+      author: Åsa Wegelius
+      changes:
+        # Main table
+        - createTable:
+            tableName: client_application_grant_type
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: application_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: grant_type
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            constraintName: fk_grant_type_app
+            baseTableName: client_application_grant_type
+            baseColumnNames: application_id
+            referencedTableName: client_application
+            referencedColumnNames: application_id
+            onDelete: CASCADE
+
+        - createIndex:
+            tableName: client_application_grant_type
+            indexName: idx_grant_type_id
+            columns:
+              - column:
+                  name: id
+
+        - createIndex:
+            tableName: client_application_grant_type
+            indexName: idx_grant_type_application_id
+            columns:
+              - column:
+                  name: application_id
+
+        # Audit table
+        - createTable:
+            tableName: client_application_grant_type_audit
+            columns:
+              - column:
+                  name: audit_id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: id
+                  type: UUID
+              - column:
+                  name: application_id
+                  type: UUID
+              - column:
+                  name: grant_type
+                  type: VARCHAR(64)
+              - column:
+                  name: operation_type
+                  type: VARCHAR(16)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: change_timestamp
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: actor_type
+                  type: VARCHAR(16)
+              - column:
+                  name: actor_id
+                  type: UUID
+
+        - createIndex:
+            tableName: client_application_grant_type_audit
+            indexName: idx_client_application_grant_type_audit_id
+            columns:
+              - column:
+                  name: id
+
+        # Trigger function
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              CREATE OR REPLACE FUNCTION audit_client_application_grant_type_changes() RETURNS TRIGGER AS $$
+              BEGIN
+                INSERT INTO client_application_grant_type_audit (
+                  id,
+                  application_id,
+                  grant_type,
+                  operation_type,
+                  change_timestamp,
+                  actor_type,
+                  actor_id
+                ) VALUES (
+                  COALESCE(NEW.id, OLD.id),
+                  COALESCE(NEW.application_id, OLD.application_id),
+                  COALESCE(NEW.grant_type, OLD.grant_type),
+                  TG_OP,
+                  now(),
+                  NULL,
+                  NULL
+                );
+                RETURN NEW;
+              END;
+              $$ LANGUAGE plpgsql;
+
+        # Trigger
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              CREATE TRIGGER trg_client_application_grant_type_audit
+              AFTER INSERT OR UPDATE OR DELETE
+              ON client_application_grant_type
+              FOR EACH ROW
+              EXECUTE FUNCTION audit_client_application_grant_type_changes();

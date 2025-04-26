@@ -1,0 +1,143 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-create-client-application-with-audit
+      author: Åsa Wegelius
+      changes:
+        # Main table
+        - createTable:
+            tableName: client_application
+            columns:
+              - column:
+                  name: application_id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: client_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            constraintName: fk_application_client
+            baseTableName: client_application
+            baseColumnNames: client_id
+            referencedTableName: system_client
+            referencedColumnNames: client_id
+            onDelete: CASCADE
+
+        - createIndex:
+            tableName: client_application
+            indexName: idx_client_application_id
+            columns:
+              - column:
+                  name: application_id
+
+        - createIndex:
+            tableName: client_application
+            indexName: idx_client_application_client_id
+            columns:
+              - column:
+                  name: client_id
+
+        # Audit table
+        - createTable:
+            tableName: client_application_audit
+            columns:
+              - column:
+                  name: audit_id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: application_id
+                  type: UUID
+              - column:
+                  name: client_id
+                  type: UUID
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+              - column:
+                  name: operation_type
+                  type: VARCHAR(16)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: change_timestamp
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: actor_type
+                  type: VARCHAR(16)
+              - column:
+                  name: actor_id
+                  type: UUID
+
+        - createIndex:
+            tableName: client_application_audit
+            indexName: idx_client_application_audit_application_id
+            columns:
+              - column:
+                  name: application_id
+
+        # Trigger function
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              CREATE OR REPLACE FUNCTION audit_client_application_changes() RETURNS TRIGGER AS $$
+              BEGIN
+                INSERT INTO client_application_audit (
+                  application_id,
+                  client_id,
+                  name,
+                  created_at,
+                  operation_type,
+                  change_timestamp,
+                  actor_type,
+                  actor_id
+                ) VALUES (
+                  COALESCE(NEW.application_id, OLD.application_id),
+                  COALESCE(NEW.client_id, OLD.client_id),
+                  COALESCE(NEW.name, OLD.name),
+                  COALESCE(NEW.created_at, OLD.created_at),
+                  TG_OP,
+                  now(),
+                  NULL,
+                  NULL
+                );
+                RETURN NEW;
+              END;
+              $$ LANGUAGE plpgsql;
+
+        # Trigger
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              CREATE TRIGGER trg_client_application_audit
+              AFTER INSERT OR UPDATE OR DELETE
+              ON client_application
+              FOR EACH ROW
+              EXECUTE FUNCTION audit_client_application_changes();

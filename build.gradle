@@ -43,6 +43,16 @@ dependencies {
 	testImplementation 'org.spockframework:spock-spring:2.4-M6-groovy-3.0'
 }
 
-tasks.named('test') {
+tasks.withType(Test).configureEach {
 	useJUnitPlatform()
+	include '**/unit/**'
+}
+
+tasks.register('integrationTest', Test) {
+	description = 'Runs the integration tests.'
+	group = 'verification'
+	useJUnitPlatform()
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	include '**/integration/**'
 }

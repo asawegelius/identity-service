@@ -1,0 +1,143 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-user-with-audit
+      author: Åsa Wegelius
+      changes:
+        # Main table
+        - createTable:
+            tableName: user
+            columns:
+              - column:
+                  name: user_id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_type
+                  type: VARCHAR(32)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: VARCHAR(320)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: display_name
+                  type: VARCHAR(255)
+              - column:
+                  name: updated_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+
+        - createIndex:
+            tableName: user
+            indexName: idx_user_user_id
+            columns:
+              - column:
+                  name: user_id
+
+        - createIndex:
+            tableName: user
+            indexName: idx_user_email
+            columns:
+              - column:
+                  name: email
+
+        # Audit table
+        - createTable:
+            tableName: user_audit
+            columns:
+              - column:
+                  name: audit_id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: UUID
+              - column:
+                  name: user_type
+                  type: VARCHAR(32)
+              - column:
+                  name: email
+                  type: VARCHAR(320)
+              - column:
+                  name: display_name
+                  type: VARCHAR(255)
+              - column:
+                  name: updated_at
+                  type: TIMESTAMPTZ
+              - column:
+                  name: operation_type
+                  type: VARCHAR(16)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: change_timestamp
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: actor_type
+                  type: VARCHAR(16)
+              - column:
+                  name: actor_id
+                  type: UUID
+
+        - createIndex:
+            tableName: user_audit
+            indexName: idx_user_audit_user_id
+            columns:
+              - column:
+                  name: user_id
+
+        # Trigger function
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              CREATE OR REPLACE FUNCTION audit_user_changes() RETURNS TRIGGER AS $$
+              BEGIN
+                INSERT INTO user_audit (
+                  user_id,
+                  user_type,
+                  email,
+                  display_name,
+                  updated_at,
+                  operation_type,
+                  change_timestamp,
+                  actor_type,
+                  actor_id
+                ) VALUES (
+                  COALESCE(NEW.user_id, OLD.user_id),
+                  COALESCE(NEW.user_type, OLD.user_type),
+                  COALESCE(NEW.email, OLD.email),
+                  COALESCE(NEW.display_name, OLD.display_name),
+                  COALESCE(NEW.updated_at, OLD.updated_at),
+                  TG_OP,
+                  now(),
+                  NULL,
+                  NULL
+                );
+                RETURN NEW;
+              END;
+              $$ LANGUAGE plpgsql;
+
+        # Trigger
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              CREATE TRIGGER trg_user_audit
+              AFTER INSERT OR UPDATE OR DELETE
+              ON "user"
+              FOR EACH ROW
+              EXECUTE FUNCTION audit_user_changes();

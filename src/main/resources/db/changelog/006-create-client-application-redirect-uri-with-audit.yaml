@@ -1,0 +1,132 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-create-client-application-redirect-uri-with-audit
+      author: Åsa Wegelius
+      changes:
+        # Main table
+        - createTable:
+            tableName: client_application_redirect_uri
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: application_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: redirect_uri
+                  type: TEXT
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            constraintName: fk_redirect_app
+            baseTableName: client_application_redirect_uri
+            baseColumnNames: application_id
+            referencedTableName: client_application
+            referencedColumnNames: application_id
+            onDelete: CASCADE
+
+        - createIndex:
+            tableName: client_application_redirect_uri
+            indexName: idx_client_application_redirect_uri_id
+            columns:
+              - column:
+                  name: id
+
+        - createIndex:
+            tableName: client_application_redirect_uri
+            indexName: idx_client_application_redirect_uri_application_id
+            columns:
+              - column:
+                  name: application_id
+
+        # Audit table
+        - createTable:
+            tableName: client_application_redirect_uri_audit
+            columns:
+              - column:
+                  name: audit_id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: id
+                  type: UUID
+              - column:
+                  name: application_id
+                  type: UUID
+              - column:
+                  name: redirect_uri
+                  type: TEXT
+              - column:
+                  name: operation_type
+                  type: VARCHAR(16)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: change_timestamp
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: actor_type
+                  type: VARCHAR(16)
+              - column:
+                  name: actor_id
+                  type: UUID
+
+        - createIndex:
+            tableName: client_application_redirect_uri_audit
+            indexName: idx_client_application_redirect_uri_audit_id
+            columns:
+              - column:
+                  name: id
+
+        # Trigger function
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              CREATE OR REPLACE FUNCTION audit_client_application_redirect_uri_changes() RETURNS TRIGGER AS $$
+              BEGIN
+                INSERT INTO client_application_redirect_uri_audit (
+                  id,
+                  application_id,
+                  redirect_uri,
+                  operation_type,
+                  change_timestamp,
+                  actor_type,
+                  actor_id
+                ) VALUES (
+                  COALESCE(NEW.id, OLD.id),
+                  COALESCE(NEW.application_id, OLD.application_id),
+                  COALESCE(NEW.redirect_uri, OLD.redirect_uri),
+                  TG_OP,
+                  now(),
+                  NULL,
+                  NULL
+                );
+                RETURN NEW;
+              END;
+              $$ LANGUAGE plpgsql;
+
+        # Trigger
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              CREATE TRIGGER trg_client_application_redirect_uri_audit
+              AFTER INSERT OR UPDATE OR DELETE
+              ON client_application_redirect_uri
+              FOR EACH ROW
+              EXECUTE FUNCTION audit_client_application_redirect_uri_changes();
