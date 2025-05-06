@@ -37,3 +37,10 @@ management:
   endpoint:
     health:
       show-details: always
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    display-request-duration: true
