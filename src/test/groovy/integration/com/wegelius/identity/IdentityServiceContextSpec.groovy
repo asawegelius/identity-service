@@ -1,6 +1,6 @@
-package integration.com.wegelius.identity_service
+package integration.com.wegelius.identity
 
-import com.wegelius.identity_service.IdentityServiceApplication
+import com.wegelius.identity.IdentityServiceApplication
 import org.springframework.boot.test.context.SpringBootTest
 import spock.lang.Specification
 

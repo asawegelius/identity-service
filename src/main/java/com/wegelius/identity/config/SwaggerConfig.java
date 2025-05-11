@@ -1,4 +1,4 @@
-package com.wegelius.identity_service.config;
+package com.wegelius.identity.config;
 
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.OpenAPI;

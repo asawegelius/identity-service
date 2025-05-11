@@ -1,4 +1,4 @@
-package com.wegelius.identity_service.model;
+package com.wegelius.identity.model;
 
 import jakarta.persistence.*;
 import java.util.UUID;

@@ -1,6 +1,6 @@
-package integration.com.wegelius.identity_service.db.audit
+package integration.com.wegelius.identity.db.audit
 
-import com.wegelius.identity_service.IdentityServiceApplication
+import com.wegelius.identity.IdentityServiceApplication
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.jdbc.core.JdbcTemplate

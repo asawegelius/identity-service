@@ -1,4 +1,4 @@
-package com.wegelius.identity_service.shared;
+package com.wegelius.identity.shared;
 
 public interface ApplicationLogger {
     void info(String message);
