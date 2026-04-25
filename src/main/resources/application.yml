@@ -1,15 +1,18 @@
 spring:
   application:
     name: identity-service
-
+  security:
+    user:
+      name: admin
+      password: admin123
   devtools:
     restart:
       enabled: true
   datasource:
-    url: jdbc:postgresql://localhost:5433/identity_db
+    url: jdbc:postgresql://localhost:5433/calendar-chat-db?currentSchema=identity_db
     driver-class-name: org.postgresql.Driver
-    username: devuser
-    password: devpass
+    username: identity_adm
+    password: identity-pw
 
   jpa:
     hibernate:

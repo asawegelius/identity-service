@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    url: ${IDENTITY_AUDIT_DB_URL:jdbc:postgresql://localhost:5433/identity_db}
+    driver-class-name: org.postgresql.Driver
+    username: ${IDENTITY_AUDIT_DB_USERNAME:devuser}
+    password: ${IDENTITY_AUDIT_DB_PASSWORD:devpass}
+  jpa:
+    hibernate:
+      ddl-auto: none
+  liquibase:
+    enabled: true

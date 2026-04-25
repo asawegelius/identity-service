@@ -1,8 +1,10 @@
 package unit.com.wegelius.identity.repository
 
 import com.wegelius.identity.exception.EmailAlreadyExistsException
+import com.wegelius.identity.logging.LogFactory
 import com.wegelius.identity.model.RegisterUserRequest
 import com.wegelius.identity.repository.UserRepository
+import org.slf4j.Logger
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.security.crypto.password.PasswordEncoder
 import spock.lang.Specification
@@ -11,7 +13,13 @@ class UserRepositorySpec extends Specification {
 
     def jdbcTemplate = Mock(NamedParameterJdbcTemplate)
     def passwordEncoder = Mock(PasswordEncoder)
-    def repository = new UserRepository(jdbcTemplate, passwordEncoder)
+    def appLogger = Mock(Logger)
+    def securityLogger = Mock(Logger)
+    def logFactory = Mock(LogFactory) {
+        getLogger(_ as Class) >> appLogger
+        getSecurityLogger() >> securityLogger
+    }
+    def repository = new UserRepository(jdbcTemplate, passwordEncoder, logFactory)
 
     def "registerUser inserts user and credential if email is not taken"() {
         given:
