@@ -136,8 +136,15 @@ class AllAuditTriggersSpec extends Specification {
                 return """INSERT INTO system_client (client_id, client_name, description, registered_at)
                           VALUES ('$id', 'BulkTestClient', 'bulk description', now())"""
             case "credential":
-                return """INSERT INTO credential (credential_id, credential_type, secret_value, client_id, created_at)
-                          VALUES ('$id', 'PASSWORD', 'bulk-secret', '00000000-0000-0000-0000-000000000002', now())"""
+                return """WITH ensured_user AS (
+                            INSERT INTO "user" (user_id, email, status, failed_attempts, created_at, updated_at)
+                            VALUES ('11111111-1111-1111-1111-111111111111', 'credential-audit@example.com', 'ACTIVE', 0, now(), now())
+                            ON CONFLICT (email) DO UPDATE SET updated_at = EXCLUDED.updated_at
+                            RETURNING user_id
+                          )
+                          INSERT INTO credential (credential_id, credential_type, secret_hash, user_id, created_at, updated_at)
+                          SELECT '$id', 'PASSWORD', 'bulk-secret', user_id, now(), now()
+                          FROM ensured_user"""
             case "client_application":
                 return """INSERT INTO client_application (application_id, client_id, name, created_at)
                           VALUES ('$id', '00000000-0000-0000-0000-000000000002', 'Bulk App', now())"""

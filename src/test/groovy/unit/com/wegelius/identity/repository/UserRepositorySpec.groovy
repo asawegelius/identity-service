@@ -36,7 +36,10 @@ class UserRepositorySpec extends Specification {
                 { sql -> sql.contains('INSERT INTO "user"') && sql.contains('status') && sql.contains('failed_attempts') },
                 { params -> params.email == "test@example.com" && params.status == AccountStatus.PENDING_ACTIVATION.name() && params.failedAttempts == 0 }
         )
-        1 * jdbcTemplate.update({ it.contains('INSERT INTO credential') }, _)
+        1 * jdbcTemplate.update(
+                { sql -> sql.contains('INSERT INTO credential') && sql.contains('secret_hash') && sql.contains('updated_at') && sql.contains("'PASSWORD'") },
+                { params -> params.secretHash == "hashed_password" }
+        )
     }
 
     def "registerUser throws exception if email is already registered"() {

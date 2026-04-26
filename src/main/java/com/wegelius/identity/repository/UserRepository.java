@@ -61,11 +61,11 @@ public class UserRepository {
         }
 
         jdbcTemplate.update("""
-        INSERT INTO credential (credential_id, credential_type, secret_value, user_id, created_at)
-        VALUES (:credId, 'password', :hash, :userId, now())
+        INSERT INTO credential (credential_id, credential_type, secret_hash, user_id, created_at, updated_at)
+        VALUES (:credId, 'PASSWORD', :secretHash, :userId, now(), now())
     """, Map.of(
                 "credId", UUID.randomUUID().toString(),
-                "hash", passwordEncoder.encode(request.getPassword()),
+                "secretHash", passwordEncoder.encode(request.getPassword()),
                 "userId", userId
         ));
     }

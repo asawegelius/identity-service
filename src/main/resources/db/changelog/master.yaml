@@ -2,13 +2,11 @@ databaseChangeLog:
   # Identity-owned persistence that still belongs to this service.
   - include:
       file: db/changelog/001-create-user-with-audit.yaml
-  # Transitional mixed dependency: credential still references system_client
-  # until IA-004.3 narrows credential back to identity-only password semantics.
-  - include:
-      file: db/changelog/002-create-system-client-with-audit.yaml
   - include:
       file: db/changelog/003-create-credential-with-audit.yaml
   - include:
       file: db/changelog/009-add-unique-constraint-on-user-email.yaml
   - include:
       file: db/changelog/010-align-user-table-with-account-state-model.yaml
+  - include:
+      file: db/changelog/011-align-credential-table-with-identity-password-semantics.yaml
