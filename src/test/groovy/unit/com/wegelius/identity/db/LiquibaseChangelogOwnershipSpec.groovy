@@ -10,11 +10,13 @@ class LiquibaseChangelogOwnershipSpec extends Specification {
 
         expect:
         master.contains("001-create-user-with-audit.yaml")
-        master.contains("002-create-system-client-with-audit.yaml")
         master.contains("003-create-credential-with-audit.yaml")
         master.contains("009-add-unique-constraint-on-user-email.yaml")
+        master.contains("010-align-user-table-with-account-state-model.yaml")
+        master.contains("011-align-credential-table-with-identity-password-semantics.yaml")
 
         and:
+        !master.contains("002-create-system-client-with-audit.yaml")
         !master.contains("004-create-session-table.yaml")
         !master.contains("005-create-client-application-with-audit.yaml")
         !master.contains("006-create-client-application-redirect-uri-with-audit.yaml")
@@ -27,6 +29,7 @@ class LiquibaseChangelogOwnershipSpec extends Specification {
         def authProvider = loadClasspathText("db/changelog/auth-provider-owned-transition.yaml")
 
         expect:
+        authProvider.contains("002-create-system-client-with-audit.yaml")
         authProvider.contains("004-create-session-table.yaml")
         authProvider.contains("005-create-client-application-with-audit.yaml")
         authProvider.contains("006-create-client-application-redirect-uri-with-audit.yaml")

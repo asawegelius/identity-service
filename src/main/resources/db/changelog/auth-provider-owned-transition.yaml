@@ -5,6 +5,8 @@ databaseChangeLog:
   # They remain in this repository temporarily so the ownership boundary is explicit
   # while physical extraction is still pending.
   - include:
+      file: db/changelog/002-create-system-client-with-audit.yaml
+  - include:
       file: db/changelog/004-create-session-table.yaml
   - include:
       file: db/changelog/005-create-client-application-with-audit.yaml
