@@ -10,3 +10,5 @@ databaseChangeLog:
       file: db/changelog/010-align-user-table-with-account-state-model.yaml
   - include:
       file: db/changelog/011-align-credential-table-with-identity-password-semantics.yaml
+  - include:
+      file: db/changelog/012-correct-identity-audit-and-index-design.yaml

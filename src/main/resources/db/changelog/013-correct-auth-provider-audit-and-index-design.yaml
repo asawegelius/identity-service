@@ -1,0 +1,127 @@
+databaseChangeLog:
+  - changeSet:
+      id: 013-correct-auth-provider-audit-and-index-design
+      author: Asa Wegelius
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              DROP INDEX IF EXISTS idx_system_client_client_id;
+              DROP INDEX IF EXISTS idx_session_session_id;
+              DROP INDEX IF EXISTS idx_client_application_id;
+              DROP INDEX IF EXISTS idx_client_application_redirect_uri_id;
+              DROP INDEX IF EXISTS idx_grant_type_id;
+              DROP INDEX IF EXISTS idx_grant_grant_id;
+
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              CREATE OR REPLACE FUNCTION audit_system_client_changes() RETURNS TRIGGER AS $$
+              BEGIN
+                INSERT INTO system_client_audit (
+                  client_id,
+                  client_name,
+                  description,
+                  registered_at,
+                  operation_type,
+                  change_timestamp,
+                  actor_type,
+                  actor_id
+                ) VALUES (
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.client_id END,
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.client_name END,
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.description END,
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.registered_at END,
+                  TG_OP,
+                  now(),
+                  NULL,
+                  NULL
+                );
+                RETURN COALESCE(NEW, OLD);
+              END;
+              $$ LANGUAGE plpgsql;
+
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              CREATE OR REPLACE FUNCTION audit_client_application_changes() RETURNS TRIGGER AS $$
+              BEGIN
+                INSERT INTO client_application_audit (
+                  application_id,
+                  client_id,
+                  name,
+                  created_at,
+                  operation_type,
+                  change_timestamp,
+                  actor_type,
+                  actor_id
+                ) VALUES (
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.application_id END,
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.client_id END,
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.name END,
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.created_at END,
+                  TG_OP,
+                  now(),
+                  NULL,
+                  NULL
+                );
+                RETURN COALESCE(NEW, OLD);
+              END;
+              $$ LANGUAGE plpgsql;
+
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              CREATE OR REPLACE FUNCTION audit_client_application_redirect_uri_changes() RETURNS TRIGGER AS $$
+              BEGIN
+                INSERT INTO client_application_redirect_uri_audit (
+                  id,
+                  application_id,
+                  redirect_uri,
+                  operation_type,
+                  change_timestamp,
+                  actor_type,
+                  actor_id
+                ) VALUES (
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.id END,
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.application_id END,
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.redirect_uri END,
+                  TG_OP,
+                  now(),
+                  NULL,
+                  NULL
+                );
+                RETURN COALESCE(NEW, OLD);
+              END;
+              $$ LANGUAGE plpgsql;
+
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              CREATE OR REPLACE FUNCTION audit_client_application_grant_type_changes() RETURNS TRIGGER AS $$
+              BEGIN
+                INSERT INTO client_application_grant_type_audit (
+                  id,
+                  application_id,
+                  grant_type,
+                  operation_type,
+                  change_timestamp,
+                  actor_type,
+                  actor_id
+                ) VALUES (
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.id END,
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.application_id END,
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.grant_type END,
+                  TG_OP,
+                  now(),
+                  NULL,
+                  NULL
+                );
+                RETURN COALESCE(NEW, OLD);
+              END;
+              $$ LANGUAGE plpgsql;

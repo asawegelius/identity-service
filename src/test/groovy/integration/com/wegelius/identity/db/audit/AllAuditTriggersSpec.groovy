@@ -11,7 +11,6 @@ import spock.lang.Requires
 import spock.lang.Unroll
 
 import java.sql.DriverManager
-import java.sql.ResultSet
 
 /**
  * Integration test that verifies audit triggers are correctly recording changes
@@ -37,9 +36,9 @@ class AllAuditTriggersSpec extends Specification {
     }
 
     /**
-     * Dynamically fetch all audit tables and determine their corresponding main table and primary key column.
+     * Dynamically fetch all audit tables and determine their corresponding main table.
      *
-     * @return List of maps containing mainTable, auditTable, and idColumn keys.
+     * @return List of maps containing mainTable and auditTable keys.
      */
     static List<Map<String, String>> fetchAuditTables() {
         def url = System.getenv("IDENTITY_AUDIT_DB_URL") ?: "jdbc:postgresql://localhost:5433/identity_db"
@@ -65,17 +64,9 @@ class AllAuditTriggersSpec extends Specification {
             def auditTableName = rs.getString("table_name")
             def mainTableName = auditTableName.replaceFirst('_audit$', '')
 
-            // Find the primary key column name of the main table
-            def idColumn = findPrimaryKeyColumn(conn, mainTableName)
-
-            if (idColumn == null) {
-                throw new IllegalArgumentException("Could not find primary key for table: $mainTableName")
-            }
-
             results << [
                     mainTable : mainTableName,
-                    auditTable: auditTableName,
-                    idColumn  : idColumn
+                    auditTable: auditTableName
             ]
         }
 
@@ -83,26 +74,15 @@ class AllAuditTriggersSpec extends Specification {
         return results
     }
 
-    /**
-     * Find the primary key column for a given table.
-     *
-     * @param conn JDBC connection
-     * @param tableName name of the main table
-     * @return the primary key column name
-     */
-    static String findPrimaryKeyColumn(def conn, String tableName) {
-        ResultSet pkRs = conn.metaData.getPrimaryKeys(null, "public", tableName)
-
-        if (pkRs.next()) {
-            return pkRs.getString("COLUMN_NAME")
-        }
-        return null
-    }
-
     @Unroll
     def "audit table #auditTable correctly records operations on #mainTable"() {
         given: "A new ID for inserting a test record"
         UUID newId = UUID.randomUUID()
+
+        and: "The current number of audit rows"
+        def beforeCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM ${auditTable}", Integer
+        )
 
         and: "Prepare an INSERT SQL statement for the main table"
         String insertSql = generateInsertSql(mainTable as String, newId)
@@ -110,14 +90,14 @@ class AllAuditTriggersSpec extends Specification {
         when: "Insert a record into the main table"
         jdbcTemplate.update(insertSql)
 
-        then: "Verify that a corresponding audit record exists"
-        def auditCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM ${auditTable} WHERE ${idColumn} = ?", Integer, newId
+        then: "Verify that a corresponding audit record exists even when CREATE captures only metadata"
+        def afterCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM ${auditTable}", Integer
         )
-        auditCount > 0
+        afterCount == beforeCount + 1
 
         where:
-        [mainTable, auditTable, idColumn] << auditTables.collect { [it.mainTable, it.auditTable, it.idColumn] }
+        [mainTable, auditTable] << auditTables.collect { [it.mainTable, it.auditTable] }
     }
 
     /**

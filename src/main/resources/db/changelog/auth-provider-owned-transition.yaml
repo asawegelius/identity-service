@@ -16,3 +16,5 @@ databaseChangeLog:
       file: db/changelog/007-create-client-application-grant-type-with-audit.yaml
   - include:
       file: db/changelog/008-create-authorization-grant-table.yaml
+  - include:
+      file: db/changelog/013-correct-auth-provider-audit-and-index-design.yaml
