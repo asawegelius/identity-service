@@ -16,16 +16,11 @@ java {
 
 repositories {
 	mavenCentral()
-	maven {
-		name = 'local'
-		url = uri("${project.rootDir}/../.local-repo")
-	}
 }
 
 dependencies {
-	implementation 'com.wegelius:notifications.api:1.0.0'
-	implementation 'org.hibernate.validator:hibernate-validator:8.0.1.Final'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.bouncycastle:bcprov-jdk18on:1.80'
 	implementation 'org.springframework.security:spring-security-oauth2-authorization-server:1.4.2'

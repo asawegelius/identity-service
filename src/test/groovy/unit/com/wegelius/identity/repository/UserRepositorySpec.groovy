@@ -5,6 +5,7 @@ import com.wegelius.identity.logging.LogFactory
 import com.wegelius.identity.model.RegisterUserRequest
 import com.wegelius.identity.repository.UserRepository
 import org.slf4j.Logger
+import org.springframework.dao.DuplicateKeyException
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.security.crypto.password.PasswordEncoder
 import spock.lang.Specification
@@ -23,9 +24,8 @@ class UserRepositorySpec extends Specification {
 
     def "registerUser inserts user and credential if email is not taken"() {
         given:
-        def request = new RegisterUserRequest(email: "test@example.com", password: "s3cret", displayName: "Test User")
-        passwordEncoder.encode("s3cret") >> "hashed_password"
-        jdbcTemplate.queryForObject(_ as String, _ as Map<String, ?>, Boolean.class) >> false
+        def request = new RegisterUserRequest(email: "test@example.com", password: "secret123", displayName: "Test User")
+        passwordEncoder.encode("secret123") >> "hashed_password"
 
         when:
         repository.registerUser(request)
@@ -35,17 +35,16 @@ class UserRepositorySpec extends Specification {
         1 * jdbcTemplate.update({ it.contains('INSERT INTO credential') }, _)
     }
 
-
     def "registerUser throws exception if email is already registered"() {
         given:
-        def request = new RegisterUserRequest(email: "duplicate@example.com", password: "secret123", displayName: "Doppelgänger")
-        jdbcTemplate.queryForObject(_ as String, _ as Map<String, ?>, Boolean.class) >> true
+        def request = new RegisterUserRequest(email: "duplicate@example.com", password: "secret123", displayName: "Duplicate User")
+        jdbcTemplate.update({ it.contains('INSERT INTO "user"') }, _ as Map<String, ?>) >> { throw new DuplicateKeyException("uq_user_email") }
 
         when:
         repository.registerUser(request)
 
         then:
         thrown(EmailAlreadyExistsException)
+        0 * jdbcTemplate.update({ it.contains('INSERT INTO credential') }, _)
     }
-
 }

@@ -6,6 +6,7 @@ import com.wegelius.identity.model.RegisterUserRequest;
 import com.wegelius.identity.repository.UserRepository;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserService {
@@ -31,6 +32,7 @@ public class UserService {
      * @param request user input including email, password, and optional display name
      * @throws EmailAlreadyExistsException if the email is already registered
      */
+    @Transactional
     public void registerUser(RegisterUserRequest request) {
         userRepository.registerUser(request);
     }

@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: 009-add-unique-constraint-on-user-email
+      author: Asa Wegelius
+      changes:
+        - addUniqueConstraint:
+            tableName: user
+            columnNames: email
+            constraintName: uq_user_email
