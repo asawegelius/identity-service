@@ -1,46 +1,59 @@
 package com.wegelius.identity.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "users")
+@Table(name = "\"user\"")
 public class User {
 
     @Id
-    @GeneratedValue
-    private UUID id;
+    @Column(name = "user_id", nullable = false, updatable = false)
+    private UUID userId;
 
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
-    private String password;
+    @Column(name = "display_name")
+    private String displayName;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String createdAt;
+    private AccountStatus status;
 
-    @Column(nullable = false)
-    private String updatedAt;
+    @Column(name = "failed_attempts", nullable = false)
+    private int failedAttempts;
 
-    @Version
-    private Long version  = 0L;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private OffsetDateTime updatedAt;
 
     protected User() {
         // JPA
     }
 
-    public User(String email, String password) {
+    public User(UUID userId, String email, String displayName, AccountStatus status) {
+        this.userId = userId;
         this.email = email;
-        this.password = password;
+        this.displayName = displayName;
+        this.status = status;
     }
 
-    public UUID getId() {
-        return id;
+    public UUID getUserId() {
+        return userId;
     }
 
-    public void setId(UUID id) {
-        this.id = id;
+    public void setUserId(UUID userId) {
+        this.userId = userId;
     }
 
     public String getEmail() {
@@ -51,35 +64,43 @@ public class User {
         this.email = email;
     }
 
-    public String getPassword() {
-        return password;
+    public String getDisplayName() {
+        return displayName;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
     }
 
-    public String getCreatedAt() {
+    public AccountStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(AccountStatus status) {
+        this.status = status;
+    }
+
+    public int getFailedAttempts() {
+        return failedAttempts;
+    }
+
+    public void setFailedAttempts(int failedAttempts) {
+        this.failedAttempts = failedAttempts;
+    }
+
+    public OffsetDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(String createdAt) {
+    public void setCreatedAt(OffsetDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
-    public String getUpdatedAt() {
+    public OffsetDateTime getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(String updatedAt) {
+    public void setUpdatedAt(OffsetDateTime updatedAt) {
         this.updatedAt = updatedAt;
-    }
-
-    public Long getVersion() {
-        return version;
-    }
-
-    public void setVersion(Long version) {
-        this.version = version;
     }
 }

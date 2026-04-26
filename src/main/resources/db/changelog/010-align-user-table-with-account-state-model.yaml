@@ -1,0 +1,97 @@
+databaseChangeLog:
+  - changeSet:
+      id: 010-align-user-table-with-account-state-model
+      author: Asa Wegelius
+      changes:
+        - addColumn:
+            tableName: user
+            columns:
+              - column:
+                  name: status
+                  type: VARCHAR(32)
+                  defaultValue: PENDING_ACTIVATION
+                  constraints:
+                    nullable: false
+              - column:
+                  name: failed_attempts
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              ALTER TABLE "user"
+              ADD CONSTRAINT chk_user_status
+              CHECK (status IN ('PENDING_ACTIVATION', 'ACTIVE', 'LOCKED', 'DISABLED'));
+
+        - createIndex:
+            tableName: user
+            indexName: idx_user_status
+            columns:
+              - column:
+                  name: status
+
+        - dropColumn:
+            tableName: user
+            columnName: user_type
+
+        - addColumn:
+            tableName: user_audit
+            columns:
+              - column:
+                  name: status
+                  type: VARCHAR(32)
+              - column:
+                  name: failed_attempts
+                  type: INT
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+
+        - dropColumn:
+            tableName: user_audit
+            columnName: user_type
+
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              CREATE OR REPLACE FUNCTION audit_user_changes() RETURNS TRIGGER AS $$
+              BEGIN
+                INSERT INTO user_audit (
+                  user_id,
+                  email,
+                  display_name,
+                  status,
+                  failed_attempts,
+                  created_at,
+                  updated_at,
+                  operation_type,
+                  change_timestamp,
+                  actor_type,
+                  actor_id
+                ) VALUES (
+                  COALESCE(NEW.user_id, OLD.user_id),
+                  COALESCE(NEW.email, OLD.email),
+                  COALESCE(NEW.display_name, OLD.display_name),
+                  COALESCE(NEW.status, OLD.status),
+                  COALESCE(NEW.failed_attempts, OLD.failed_attempts),
+                  COALESCE(NEW.created_at, OLD.created_at),
+                  COALESCE(NEW.updated_at, OLD.updated_at),
+                  TG_OP,
+                  now(),
+                  NULL,
+                  NULL
+                );
+                RETURN NEW;
+              END;
+              $$ LANGUAGE plpgsql;
