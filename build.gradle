@@ -20,6 +20,7 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.bouncycastle:bcprov-jdk18on:1.80'
 	implementation 'org.springframework.security:spring-security-oauth2-authorization-server:1.4.2'
@@ -38,14 +39,18 @@ dependencies {
 	testImplementation('org.springframework.boot:spring-boot-starter-test') {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 	}
-
 	testImplementation 'org.spockframework:spock-core:2.4-M6-groovy-3.0'
 	testImplementation 'org.spockframework:spock-spring:2.4-M6-groovy-3.0'
 }
 
 tasks.withType(Test).configureEach {
 	useJUnitPlatform()
-	include '**/unit/**'
+}
+
+tasks.named('test') {
+	filter {
+		includeTestsMatching "unit.**"
+	}
 }
 
 tasks.register('integrationTest', Test) {
@@ -54,5 +59,8 @@ tasks.register('integrationTest', Test) {
 	useJUnitPlatform()
 	testClassesDirs = sourceSets.test.output.classesDirs
 	classpath = sourceSets.test.runtimeClasspath
-	include '**/integration/**'
+	filter {
+		includeTestsMatching "integration.**"
+	}
 }
+

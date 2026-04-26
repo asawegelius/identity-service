@@ -1,11 +1,13 @@
-package integration.com.wegelius.identity_service.db.audit
+package integration.com.wegelius.identity.db.audit
 
-import com.wegelius.identity_service.IdentityServiceApplication
+import com.wegelius.identity.IdentityServiceApplication
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.test.context.ActiveProfiles
 import spock.lang.Shared
 import spock.lang.Specification
+import spock.lang.Requires
 import spock.lang.Unroll
 
 import java.sql.DriverManager
@@ -15,6 +17,8 @@ import java.sql.ResultSet
  * Integration test that verifies audit triggers are correctly recording changes
  * for all audit tables in the database.
  */
+@Requires({ System.getenv("IDENTITY_AUDIT_TESTS") == "true" })
+@ActiveProfiles("audit")
 @SpringBootTest(classes = [IdentityServiceApplication])
 class AllAuditTriggersSpec extends Specification {
 
@@ -26,7 +30,11 @@ class AllAuditTriggersSpec extends Specification {
      * This is prepared once and shared across all test methods.
      */
     @Shared
-    List<Map<String, String>> auditTables = fetchAuditTables()
+    List<Map<String, String>> auditTables
+
+    def setupSpec() {
+        auditTables = fetchAuditTables()
+    }
 
     /**
      * Dynamically fetch all audit tables and determine their corresponding main table and primary key column.
@@ -34,9 +42,9 @@ class AllAuditTriggersSpec extends Specification {
      * @return List of maps containing mainTable, auditTable, and idColumn keys.
      */
     static List<Map<String, String>> fetchAuditTables() {
-        def url = "jdbc:postgresql://localhost:5433/identity_db"
-        def user = "devuser"
-        def password = "devpass"
+        def url = System.getenv("IDENTITY_AUDIT_DB_URL") ?: "jdbc:postgresql://localhost:5433/identity_db"
+        def user = System.getenv("IDENTITY_AUDIT_DB_USERNAME") ?: "devuser"
+        def password = System.getenv("IDENTITY_AUDIT_DB_PASSWORD") ?: "devpass"
 
         def conn = DriverManager.getConnection(url, user, password)
 

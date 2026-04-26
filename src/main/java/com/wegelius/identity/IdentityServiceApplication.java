@@ -1,4 +1,4 @@
-package com.wegelius.identity_service;
+package com.wegelius.identity;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
