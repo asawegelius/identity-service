@@ -2,6 +2,7 @@ package unit.com.wegelius.identity.repository
 
 import com.wegelius.identity.exception.EmailAlreadyExistsException
 import com.wegelius.identity.logging.LogFactory
+import com.wegelius.identity.model.AccountStatus
 import com.wegelius.identity.model.RegisterUserRequest
 import com.wegelius.identity.repository.UserRepository
 import org.slf4j.Logger
@@ -31,7 +32,10 @@ class UserRepositorySpec extends Specification {
         repository.registerUser(request)
 
         then:
-        1 * jdbcTemplate.update({ it.contains('INSERT INTO "user"') }, _)
+        1 * jdbcTemplate.update(
+                { sql -> sql.contains('INSERT INTO "user"') && sql.contains('status') && sql.contains('failed_attempts') },
+                { params -> params.email == "test@example.com" && params.status == AccountStatus.PENDING_ACTIVATION.name() && params.failedAttempts == 0 }
+        )
         1 * jdbcTemplate.update({ it.contains('INSERT INTO credential') }, _)
     }
 

@@ -2,6 +2,7 @@ package com.wegelius.identity.repository;
 
 import com.wegelius.identity.exception.EmailAlreadyExistsException;
 import com.wegelius.identity.logging.LogFactory;
+import com.wegelius.identity.model.AccountStatus;
 import com.wegelius.identity.model.RegisterUserRequest;
 import org.slf4j.Logger;
 import org.springframework.dao.DuplicateKeyException;
@@ -46,12 +47,14 @@ public class UserRepository {
 
         try {
             jdbcTemplate.update("""
-            INSERT INTO "user" (user_id, user_type, email, display_name, updated_at)
-            VALUES (:userId, 'local', :email, :displayName, now())
+            INSERT INTO "user" (user_id, email, display_name, status, failed_attempts, created_at, updated_at)
+            VALUES (:userId, :email, :displayName, :status, :failedAttempts, now(), now())
         """, Map.of(
                     "userId", userId,
                     "email", request.getEmail(),
-                    "displayName", request.getDisplayName()
+                    "displayName", request.getDisplayName(),
+                    "status", AccountStatus.PENDING_ACTIVATION.name(),
+                    "failedAttempts", 0
             ));
         } catch (DuplicateKeyException ex) {
             throw new EmailAlreadyExistsException(request.getEmail());

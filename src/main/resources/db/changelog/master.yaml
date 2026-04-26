@@ -10,3 +10,5 @@ databaseChangeLog:
       file: db/changelog/003-create-credential-with-audit.yaml
   - include:
       file: db/changelog/009-add-unique-constraint-on-user-email.yaml
+  - include:
+      file: db/changelog/010-align-user-table-with-account-state-model.yaml

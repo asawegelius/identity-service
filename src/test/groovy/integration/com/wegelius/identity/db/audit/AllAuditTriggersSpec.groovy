@@ -130,8 +130,8 @@ class AllAuditTriggersSpec extends Specification {
     String generateInsertSql(String tableName, UUID id) {
         switch (tableName) {
             case "user":
-                return """INSERT INTO "user" (user_id, user_type, email, updated_at)
-                          VALUES ('$id', 'STANDARD', 'bulk@example.com', now())"""
+                return """INSERT INTO "user" (user_id, email, status, failed_attempts, created_at, updated_at)
+                          VALUES ('$id', 'bulk@example.com', 'ACTIVE', 0, now(), now())"""
             case "system_client":
                 return """INSERT INTO system_client (client_id, client_name, description, registered_at)
                           VALUES ('$id', 'BulkTestClient', 'bulk description', now())"""
