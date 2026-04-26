@@ -1,0 +1,78 @@
+databaseChangeLog:
+  - changeSet:
+      id: 012-correct-identity-audit-and-index-design
+      author: Asa Wegelius
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              DROP INDEX IF EXISTS idx_user_user_id;
+
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              CREATE OR REPLACE FUNCTION audit_user_changes() RETURNS TRIGGER AS $$
+              BEGIN
+                INSERT INTO user_audit (
+                  user_id,
+                  email,
+                  display_name,
+                  status,
+                  failed_attempts,
+                  created_at,
+                  updated_at,
+                  operation_type,
+                  change_timestamp,
+                  actor_type,
+                  actor_id
+                ) VALUES (
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.user_id END,
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.email END,
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.display_name END,
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.status END,
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.failed_attempts END,
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.created_at END,
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.updated_at END,
+                  TG_OP,
+                  now(),
+                  NULL,
+                  NULL
+                );
+                RETURN COALESCE(NEW, OLD);
+              END;
+              $$ LANGUAGE plpgsql;
+
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              CREATE OR REPLACE FUNCTION audit_credential_changes() RETURNS TRIGGER AS $$
+              BEGIN
+                INSERT INTO credential_audit (
+                  credential_id,
+                  credential_type,
+                  secret_hash,
+                  user_id,
+                  created_at,
+                  updated_at,
+                  operation_type,
+                  change_timestamp,
+                  actor_type,
+                  actor_id
+                ) VALUES (
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.credential_id END,
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.credential_type END,
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.secret_hash END,
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.user_id END,
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.created_at END,
+                  CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE OLD.updated_at END,
+                  TG_OP,
+                  now(),
+                  NULL,
+                  NULL
+                );
+                RETURN COALESCE(NEW, OLD);
+              END;
+              $$ LANGUAGE plpgsql;
